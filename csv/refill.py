@@ -13,11 +13,15 @@ soon = (now + dt.timedelta(minutes=90)).strftime("%Y-%m-%dT%H:%M")
 lim = (now + dt.timedelta(days=28)).strftime("%Y-%m-%dT%H:%M")
 past = now.strftime("%Y-%m-%dT%H:%M")
 open_ = [r for r in rows if r[6][:16] not in S and r[6][:16] > soon]
-missed = [r for r in rows if r[6][:16] not in S and r[6][:16] <= soon and r[6][:16] > (now - dt.timedelta(days=3)).strftime("%Y-%m-%dT%H:%M")]
+PREV_F = os.path.join(HERE, "last_scheduled.txt")
+PREV = set(open(PREV_F).read().split(",")) if os.path.exists(PREV_F) else set()
+# verpasst = fällig, nicht mehr geplant und auch in der letzten Runde nicht geplant (also nie hochgeladen)
+missed = [r for r in rows if r[6][:16] not in S and r[6][:16] not in PREV and r[6][:16] <= soon and r[6][:16] > (now - dt.timedelta(days=3)).strftime("%Y-%m-%dT%H:%M")]
 free = max(0, 100 - n_sched - 3)  # 3 Plätze Puffer
 batch = [r for r in open_ if r[6][:16] <= lim][:free]
 import io
 buf = io.StringIO(); csv.writer(buf).writerows([h] + batch)
+open(PREV_F, "w").write(",".join(sorted(S | {r[6][:16] for r in batch})))
 json.dump(buf.getvalue(), open(os.path.join(HERE, "batch.json"), "w"))
 print(json.dumps({"geplant": n_sched, "frei": free, "batch": len(batch), "von": batch[0][6] if batch else None,
                   "bis": batch[-1][6] if batch else None, "noch_offen": len(open_) - len(batch),
