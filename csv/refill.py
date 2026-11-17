@@ -16,7 +16,7 @@ open_ = [r for r in rows if r[6][:16] not in S and r[6][:16] > soon]
 PREV_F = os.path.join(HERE, "last_scheduled.txt")
 PREV = set(open(PREV_F).read().split(",")) if os.path.exists(PREV_F) else set()
 # verpasst = fällig, nicht mehr geplant und auch in der letzten Runde nicht geplant (also nie hochgeladen)
-missed = [r for r in rows if r[6][:16] not in S and r[6][:16] not in PREV and r[6][:16] <= soon and r[6][:16] > (now - dt.timedelta(days=3)).strftime("%Y-%m-%dT%H:%M")]
+missed = [r for r in rows if r[6][:16] not in S and r[6][:16] not in PREV and (not PREV or r[6][:16] >= min(PREV)) and r[6][:16] <= soon and r[6][:16] > (now - dt.timedelta(days=3)).strftime("%Y-%m-%dT%H:%M")]
 free = max(0, 100 - n_sched - 3)  # 3 Plätze Puffer
 batch = [r for r in open_ if r[6][:16] <= lim][:free]
 import io
